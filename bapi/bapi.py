@@ -7,7 +7,9 @@ from os.path import isfile
 from os import listdir
 from time import sleep
 import json
-
+import subprocess
+import sys
+import traceback
 app = Flask(__name__)
 api = Api(app)
 
@@ -27,13 +29,15 @@ def root():
 def vms_ep():
     """ """
     if request.method == 'POST':
-        myvm = VM(request.json)
-        myvm.save()
-        return jsonify({"status": myvm.status()}), 200 
+        try:
+            myvm = VM(request.json)
+            myvm.create()
+            myvm.save()
+            return jsonify({"status": myvm.status()}), 200 
+        except subprocess.CalledProcessError, e:
+            return jsonify({"failed": '%s' % e}), 200 
     elif request.method == 'GET':
-        return jsonify(
-                {'vms': listdir(VM_DIR)}
-               ), 200
+        return jsonify({'vms': listdir(VM_DIR)}), 200
 
 @app.route('/vm/<vm_name>/dump', methods=['GET'])
 @load_vm
@@ -71,7 +75,7 @@ def vm_ep(vm):
 
     elif request.method == 'DELETE':
         vm.delete()
-        return 202
+        return jsonify({'status': 'deleted'}), 202
 
 if __name__ == '__main__':
     app.run(debug=True, host='127.0.0.1', port=8001)
