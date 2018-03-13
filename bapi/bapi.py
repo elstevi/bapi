@@ -50,9 +50,9 @@ def vm_ep(vm):
     if request.method == 'GET':
         return jsonify({"state": vm.status()}), 200
     elif request.method == 'PATCH':
-        for key, value in request.json.items():
-            setattr(vm,key,value)
+        vm.load_from_dict(request.json)
         vm.save()
+        vm.create()
         return jsonify({'state': 'vm modified'}) 
     elif request.method == 'POST':
         if request.json['action']: 
